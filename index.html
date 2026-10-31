@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GORIORIO Gmail Simulator</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#070b16;color:white;
+ font-family:Arial,sans-serif;padding:20px;
+}
+.container{max-width:850px;margin:auto}
+header{text-align:center;margin:25px 0}
+header h1{color:#168cff;letter-spacing:2px}
+header p{color:#8998b5}
+.card{
+ background:#101a2c;border:1px solid #1d3657;
+ border-radius:15px;padding:20px;margin-bottom:18px;
+}
+label{display:block;margin:12px 0 8px;color:#a9c9ed}
+input,textarea{
+ width:100%;padding:13px;border-radius:8px;
+ border:1px solid #29476c;background:#080f1e;
+ color:white;outline:none;
+}
+button{
+ padding:12px 17px;border:0;border-radius:8px;
+ background:#087cff;color:white;font-weight:bold;
+ cursor:pointer;margin:5px 3px;
+}
+button:hover{opacity:.8}
+.stop{background:#d93652}
+.secondary{background:#263a57}
+.result{
+ background:#080f1e;border:1px solid #203653;
+ border-radius:9px;padding:12px;margin-top:10px;
+ overflow-wrap:anywhere;
+}
+.status{color:#42dca0;font-size:13px}
+#log{max-height:250px;overflow:auto}
+small{color:#8295b1}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>GORIORIO</h1>
+<h2>GMAIL SPAM SIMULATOR</h2>
+<p>Random Account Generator & Spam Simulation</p>
+</header>
+
+<div class="card">
+<h3>⚙️ Generator Settings</h3>
+<label>Jumlah akun random</label>
+<input type="number" id="jumlah" value="5" min="1" max="100">
+
+<label>Nama domain simulasi</label>
+<input value="@gmail.com" disabled>
+
+<button onclick="generate()">GENERATE AKUN</button>
+<button class="secondary" onclick="copyAll()">COPY HASIL</button>
+</div>
+
+<div class="card">
+<h3>📨 Simulasi Spam</h3>
+<label>Isi pesan simulasi</label>
+<textarea id="pesan" rows="3" placeholder="Masukkan pesan simulasi..."></textarea>
+<br>
+<button onclick="startSim()">START SIMULASI</button>
+<button class="stop" onclick="stopSim()">STOP</button>
+<p class="status" id="status">Status: Menunggu</p>
+<div id="log"></div>
+</div>
+
+<div class="card">
+<h3>👤 Hasil Generator</h3>
+<div id="hasil"><small>Belum ada akun dibuat.</small></div>
+</div>
+</div>
+
+<script>
+let accounts=[];
+let running=false;
+let timer=null;
+
+function randomName(){
+ const names=["goriorio","dinzxx","player","shadow",
+ "cyber","nova","dragon","hunter","dark","blue"];
+ return names[Math.floor(Math.random()*names.length)]
+ + Math.floor(1000+Math.random()*90000);
+}
+
+function randomPassword(){
+ const chars="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz0123456789!@#";
+ let pass="";
+ for(let i=0;i<12;i++)
+ pass+=chars[Math.floor(Math.random()*chars.length)];
+ return pass;
+}
+
+function generate(){
+ const n=Math.max(1,Math.min(100,
+ Number(document.getElementById("jumlah").value)||1));
+ accounts=[];
+ for(let i=0;i<n;i++){
+ accounts.push({
+ email:randomName()+"@example.invalid",
+ password:randomPassword()
+ });
+ }
+ render();
+ document.getElementById("status").textContent=
+ "Status: "+n+" akun simulasi berhasil dibuat";
+}
+
+function render(){
+ document.getElementById("hasil").innerHTML=accounts.map((a,i)=>`
+ <div class="result">
+ <b>#${i+1}</b><br>
+ Gmail palsu: ${a.email}<br>
+ Password random: ${a.password}
+ </div>`).join("");
+}
+
+function copyAll(){
+ if(!accounts.length)return alert("Generate akun dahulu!");
+ const text=accounts.map(a=>a.email+" | "+a.password).join("\n");
+ navigator.clipboard.writeText(text)
+ .then(()=>alert("Hasil berhasil disalin!"))
+ .catch(()=>alert("Clipboard tidak tersedia."));
+}
+
+function startSim(){
+ if(running)return;
+ if(!accounts.length)return alert("Generate akun dahulu!");
+ if(!document.getElementById("pesan").value.trim())
+ return alert("Masukkan pesan simulasi!");
+
+ running=true;
+ let i=0;
+ document.getElementById("status").textContent="Status: Simulasi berjalan";
+ timer=setInterval(()=>{
+ if(!running || i>=accounts.length){
+ stopSim();
+ return;
+ }
+ const log=document.getElementById("log");
+ const item=document.createElement("div");
+ item.className="result";
+ item.innerHTML=`<span class="status">SIMULASI SPAM #${i+1} BERHASIL</span><br>
+ Tujuan palsu: ${accounts[i].email}<br>
+ Folder: Spam (simulasi)<br>
+ Pesan: ${escapeHTML(document.getElementById("pesan").value)}`;
+ log.prepend(item);
+ i++;
+ },1000);
+}
+
+function stopSim(){
+ running=false;
+ clearInterval(timer);
+ document.getElementById("status").textContent="Status: Berhenti";
+}
+
+function escapeHTML(s){
+ return s.replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",
+ '"':"&quot;","'":"&#39;"
+ })[c]);
+}
+</script>
+</body>
+</html>
